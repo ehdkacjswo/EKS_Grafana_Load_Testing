@@ -658,8 +658,10 @@ AGENTS.md
 
 | Resource | Link |
 |----------|------|
-| AI-DLC Methodology Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/) |
 | AI-DLC Method Definition Paper | [Paper](https://prod.d13rzhkk8cj2z0.amplifyapp.com/) |
+| AI-DLC Methodology Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/) |
+| AI-DLC Open-source Launch Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/open-sourcing-adaptive-workflows-for-ai-driven-development-life-cycle-ai-dlc/) |
+| AI-DLC Example Walkthrough Blog | [AWS Blog](https://aws.amazon.com/blogs/devops/building-with-ai-dlc-using-amazon-q-developer/) |
 | Amazon Q Developer Documentation | [Docs](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/q-in-IDE.html) |
 | Kiro CLI Documentation | [Docs](https://kiro.dev/docs/cli/steering/) |
 | Cursor Rules Documentation | [Docs](https://cursor.com/docs/context/rules) |
