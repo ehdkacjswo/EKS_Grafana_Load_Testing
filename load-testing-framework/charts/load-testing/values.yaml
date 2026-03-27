@@ -12,7 +12,6 @@ namespace: load-testing
 # k6-operator configuration
 # =============================================================================
 k6-operator:
-  enabled: true
   # Manager resource limits
   manager:
     resources:
