@@ -1,0 +1,202 @@
+# =============================================================================
+# Load-Testing Framework — Base Values
+# =============================================================================
+# This file contains sane defaults for all environments.
+# Override per-environment settings in values-staging.yaml / values-production.yaml.
+# =============================================================================
+
+# -- Namespace for all load-testing resources
+namespace: load-testing
+
+# =============================================================================
+# k6-operator configuration
+# =============================================================================
+k6-operator:
+  enabled: true
+  # Manager resource limits
+  manager:
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# =============================================================================
+# k6 test execution defaults
+# =============================================================================
+k6:
+  # -- Default test runner image (pinned version, SECURITY-10)
+  image:
+    repository: grafana/k6
+    tag: "0.54.0"
+    pullPolicy: IfNotPresent
+
+  # -- Prometheus remote-write endpoint for k6 metrics output
+  prometheus:
+    remoteWriteUrl: "http://load-testing-prometheus-server.load-testing.svc.cluster.local:80/api/v1/write"
+
+  # -- Default test configuration (overridable per test run)
+  defaults:
+    parallelism: 1
+    separate: false
+
+# =============================================================================
+# Test scripts — references to ConfigMap-mounted k6 scripts
+# =============================================================================
+# Scripts are loaded from the charts/load-testing/scripts/ directory and deployed as ConfigMaps.
+# Add new scripts by placing .js files in the appropriate subdirectory and
+# listing them here.
+# =============================================================================
+scripts:
+  # -- Shared library files (mounted as common ConfigMap)
+  lib:
+    - helpers.js
+
+  # -- Test scenarios organized by type
+  smoke:
+    - smoke-example.js
+  load:
+    - load-example.js
+  stress:
+    - stress-example.js
+  spike:
+    - spike-example.js
+
+# =============================================================================
+# Target service configuration
+# =============================================================================
+# Define target services for load tests. Scripts reference these by name.
+# =============================================================================
+targets:
+  default:
+    baseUrl: "http://my-service.default.svc.cluster.local"
+    # Add more targets as needed:
+    # api-gateway:
+    #   baseUrl: "http://api-gateway.default.svc.cluster.local"
+
+# =============================================================================
+# Grafana sub-chart configuration
+# =============================================================================
+# Split into two sections:
+#   1. COMMON/PLATFORM settings — shared Grafana baseline
+#   2. LOAD-TESTING-SPECIFIC settings — dashboards, data sources for this workflow
+#
+# If Grafana is already installed in your cluster, set grafana.enabled=false
+# and configure the existing Grafana instance manually.
+# =============================================================================
+grafana:
+  enabled: true
+
+  # ---------------------------------------------------------------------------
+  # COMMON/PLATFORM SETTINGS (see grafana/grafana-common-values.yaml for docs)
+  # These would typically be managed by your platform team.
+  # ---------------------------------------------------------------------------
+  persistence:
+    enabled: true
+    size: 5Gi
+  adminUser: admin
+  # adminPassword: override via --set or secrets manager (SECURITY-12: no hardcoded creds)
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # ---------------------------------------------------------------------------
+  # LOAD-TESTING-SPECIFIC SETTINGS (see grafana/grafana-loadtest-values.yaml)
+  # ---------------------------------------------------------------------------
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "load-testing"
+      folder: /tmp/dashboards/load-testing
+      folderAnnotation: grafana_folder
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "load-testing"
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus-LoadTesting
+          type: prometheus
+          url: http://load-testing-prometheus-server.load-testing.svc.cluster.local:80
+          access: proxy
+          isDefault: true
+          editable: false
+
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: load-testing
+          orgId: 1
+          folder: Load Testing
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /tmp/dashboards/load-testing
+
+# =============================================================================
+# Prometheus sub-chart configuration
+# =============================================================================
+# Split into two sections:
+#   1. COMMON/PLATFORM settings — shared Prometheus baseline
+#   2. LOAD-TESTING-SPECIFIC settings — remote-write receiver, k6 scrape configs
+#
+# If Prometheus is already installed in your cluster, set prometheus.enabled=false
+# and update k6.prometheus.remoteWriteUrl to point to your existing instance.
+# =============================================================================
+prometheus:
+  enabled: true
+
+  # ---------------------------------------------------------------------------
+  # COMMON/PLATFORM SETTINGS (see prometheus/prometheus-common-values.yaml)
+  # ---------------------------------------------------------------------------
+  server:
+    retention: "15d"
+    persistentVolume:
+      enabled: true
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+    # Enable remote-write receiver so k6 can push metrics
+    remoteWrite: []
+    extraFlags:
+      - "web.enable-remote-write-receiver"
+
+  # Disable components not needed for load-testing metrics
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+
+  # ---------------------------------------------------------------------------
+  # LOAD-TESTING-SPECIFIC SETTINGS (see prometheus/prometheus-loadtest-values.yaml)
+  # ---------------------------------------------------------------------------
+  serverFiles:
+    prometheus.yml:
+      scrape_configs:
+        - job_name: k6-metrics
+          scrape_interval: 5s
+          static_configs:
+            - targets: []
+              labels:
+                source: k6

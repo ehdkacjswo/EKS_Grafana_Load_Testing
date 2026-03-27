@@ -1,0 +1,199 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "description": "k6 Load Testing Overview — request rate, latency, errors, VUs",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "Virtual Users (VUs)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "k6_vus{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}",
+          "legendFormat": "VUs — {{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2 },
+          "unit": "short"
+        }
+      }
+    },
+    {
+      "title": "Request Rate (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "rate(k6_http_reqs_total{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[1m])",
+          "legendFormat": "req/s — {{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 10, "lineWidth": 2 },
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "title": "HTTP Request Duration — Percentiles",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[1m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.90, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[1m]))",
+          "legendFormat": "p90"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[1m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[1m]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 5, "lineWidth": 2 },
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "title": "Error Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "rate(k6_http_reqs_total{expected_response=\"false\", environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[1m])",
+          "legendFormat": "errors/s — {{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "fixedColor": "red", "mode": "fixed" },
+          "custom": { "fillOpacity": 30, "lineWidth": 2 },
+          "unit": "reqps"
+        }
+      }
+    },
+    {
+      "title": "Test Status — Iterations",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum(increase(k6_iterations_total{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[5m]))",
+          "legendFormat": "Total Iterations"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
+    },
+    {
+      "title": "Test Status — Avg Duration",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[5m]))",
+          "legendFormat": "Median Duration"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" }
+      }
+    },
+    {
+      "title": "Test Status — Error %",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "sum(rate(k6_http_reqs_total{expected_response=\"false\", environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[5m])) / sum(rate(k6_http_reqs_total{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[5m])) * 100",
+          "legendFormat": "Error %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "percent" }
+      }
+    },
+    {
+      "title": "Test Status — Peak VUs",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        {
+          "expr": "max_over_time(k6_vus{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\"}[1h])",
+          "legendFormat": "Peak VUs"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["k6", "load-testing", "overview"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus-LoadTesting", "value": "Prometheus-LoadTesting" }
+      },
+      {
+        "name": "environment",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(k6_http_reqs_total, environment)",
+        "includeAll": true,
+        "allValue": ".*"
+      },
+      {
+        "name": "service",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(k6_http_reqs_total, service)",
+        "includeAll": true,
+        "allValue": ".*"
+      },
+      {
+        "name": "test_type",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(k6_http_reqs_total, test_type)",
+        "includeAll": true,
+        "allValue": ".*"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "k6 Load Testing — Overview",
+  "uid": "k6-load-testing-overview"
+}

@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ include "load-testing.namespace" . }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}

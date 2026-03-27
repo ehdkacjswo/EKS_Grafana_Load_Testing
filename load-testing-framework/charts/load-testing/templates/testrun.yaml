@@ -1,0 +1,55 @@
+{{/*
+  k6-operator TestRun custom resource template.
+
+  This template is NOT rendered by default during helm install/upgrade.
+  It serves as a ready-to-use template for triggering test runs.
+
+  Usage:
+    helm template load-testing ./load-testing-framework/charts/load-testing \
+      --show-only templates/testrun.yaml \
+      --set testrun.enabled=true \
+      --set testrun.scriptType=smoke \
+      --set testrun.scriptName=smoke-example.js \
+      | kubectl apply -f -
+
+  Or apply directly:
+    kubectl apply -f - <<EOF
+    <paste rendered output>
+    EOF
+*/}}
+
+{{- if .Values.testrun | default dict | dig "enabled" false }}
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: {{ include "load-testing.fullname" . }}-{{ .Values.testrun.scriptType | default "adhoc" }}-{{ now | date "20060102-150405" }}
+  namespace: {{ include "load-testing.namespace" . }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+    app.kubernetes.io/component: k6-testrun
+    test-type: {{ .Values.testrun.scriptType | default "adhoc" }}
+spec:
+  parallelism: {{ .Values.testrun.parallelism | default .Values.k6.defaults.parallelism }}
+  separate: {{ .Values.testrun.separate | default .Values.k6.defaults.separate }}
+  runner:
+    image: {{ .Values.k6.image.repository }}:{{ .Values.k6.image.tag }}
+    env:
+      - name: K6_PROMETHEUS_RW_SERVER_URL
+        value: {{ .Values.k6.prometheus.remoteWriteUrl | quote }}
+      - name: K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM
+        value: "true"
+      - name: BASE_URL
+        value: {{ (index .Values.targets (.Values.testrun.target | default "default")).baseUrl | quote }}
+    resources:
+      limits:
+        cpu: {{ .Values.testrun.resources.limits.cpu | default "500m" }}
+        memory: {{ .Values.testrun.resources.limits.memory | default "512Mi" }}
+      requests:
+        cpu: {{ .Values.testrun.resources.requests.cpu | default "250m" }}
+        memory: {{ .Values.testrun.resources.requests.memory | default "256Mi" }}
+  script:
+    configMap:
+      name: {{ include "load-testing.fullname" . }}-scripts-{{ .Values.testrun.scriptType }}
+      file: {{ .Values.testrun.scriptName }}
+  arguments: --out experimental-prometheus-rw
+{{- end }}

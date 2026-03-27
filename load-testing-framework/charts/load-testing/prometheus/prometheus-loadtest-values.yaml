@@ -1,0 +1,47 @@
+# =============================================================================
+# Prometheus — LOAD-TESTING-SPECIFIC Settings
+# =============================================================================
+# These settings are specific to the load-testing workflow.
+# They configure:
+#   - Remote-write receiver endpoint (k6 pushes metrics here)
+#   - Scrape configs for k6-related metrics
+#
+# These settings are merged into the prometheus sub-chart values in values.yaml.
+# This file exists as a REFERENCE to clearly document what is load-testing-
+# specific vs what is common/platform configuration.
+# =============================================================================
+
+prometheus:
+  server:
+    # -- Remote-write receiver: k6 pushes metrics to this endpoint.
+    #    The flag --web.enable-remote-write-receiver (set in common config)
+    #    enables the /api/v1/write endpoint on the Prometheus server.
+    #
+    #    k6 connects to:
+    #      http://<release>-prometheus-server.<namespace>.svc.cluster.local:80/api/v1/write
+    #
+    #    No additional scrape config is needed for k6 remote-write metrics —
+    #    they are written directly into Prometheus TSDB.
+    remoteWrite: []
+
+  # -- Scrape configs for load-testing-related targets.
+  #    The k6-metrics job is a placeholder for any additional scrape targets
+  #    you want to correlate with load test results (e.g., application metrics
+  #    endpoints exposed during tests).
+  serverFiles:
+    prometheus.yml:
+      scrape_configs:
+        - job_name: k6-metrics
+          scrape_interval: 5s
+          static_configs:
+            - targets: []
+              labels:
+                source: k6
+        # Add application scrape targets to correlate with load tests:
+        # - job_name: my-service-metrics
+        #   scrape_interval: 15s
+        #   static_configs:
+        #     - targets:
+        #         - my-service.default.svc.cluster.local:8080
+        #       labels:
+        #         service: my-service

@@ -1,0 +1,57 @@
+# =============================================================================
+# Grafana — LOAD-TESTING-SPECIFIC Settings
+# =============================================================================
+# These settings are specific to the load-testing workflow.
+# They configure:
+#   - Prometheus data source for k6 metrics
+#   - Dashboard sidecar for automatic dashboard provisioning
+#   - Dashboard provider pointing to the "Load Testing" folder
+#
+# These settings are merged into the grafana sub-chart values in values.yaml.
+# This file exists as a REFERENCE to clearly document what is load-testing-
+# specific vs what is common/platform configuration.
+# =============================================================================
+
+grafana:
+  # -- Sidecar: watches for ConfigMaps with matching labels and loads them
+  #    as dashboards or data sources automatically.
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "load-testing"
+      folder: /tmp/dashboards/load-testing
+      folderAnnotation: grafana_folder
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "load-testing"
+
+  # -- Data source: Prometheus instance receiving k6 remote-write metrics
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus-LoadTesting
+          type: prometheus
+          url: http://load-testing-prometheus-server.load-testing.svc.cluster.local:80
+          access: proxy
+          isDefault: true
+          editable: false
+          jsonData:
+            timeInterval: "5s"
+
+  # -- Dashboard provider: provisions JSON dashboards from the sidecar path
+  #    into a dedicated "Load Testing" folder in Grafana.
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: load-testing
+          orgId: 1
+          folder: Load Testing
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /tmp/dashboards/load-testing

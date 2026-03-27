@@ -1,0 +1,44 @@
+# =============================================================================
+# Production Environment Overrides
+# =============================================================================
+# Usage: helm install load-testing ./load-testing-framework/charts/load-testing \
+#          -f load-testing-framework/charts/load-testing/values.yaml \
+#          -f load-testing-framework/charts/load-testing/values-production.yaml
+# =============================================================================
+
+# -- Target services for production
+targets:
+  default:
+    baseUrl: "http://my-service.production.svc.cluster.local"
+
+# -- k6 defaults for production (higher capacity)
+k6:
+  defaults:
+    parallelism: 2
+    separate: false
+
+# -- Prometheus: larger storage and retention for production
+prometheus:
+  server:
+    retention: "30d"
+    persistentVolume:
+      size: 50Gi
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+
+# -- Grafana: production-grade resources
+grafana:
+  persistence:
+    size: 10Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi

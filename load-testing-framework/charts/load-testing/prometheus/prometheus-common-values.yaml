@@ -1,0 +1,53 @@
+# =============================================================================
+# Prometheus — COMMON / PLATFORM Settings
+# =============================================================================
+# These settings represent the shared, platform-level Prometheus configuration.
+# They are NOT specific to the load-testing workflow.
+#
+# If your organization already manages Prometheus separately:
+#   1. Set prometheus.enabled=false in values.yaml
+#   2. Ignore this file entirely
+#   3. Update k6.prometheus.remoteWriteUrl in values.yaml to point to your
+#      existing Prometheus remote-write endpoint
+#   4. Ensure your existing Prometheus has the remote-write receiver enabled:
+#      --web.enable-remote-write-receiver
+#
+# If you are deploying Prometheus fresh via this chart, these settings provide
+# a reasonable baseline. Adjust to match your organization's standards.
+# =============================================================================
+
+prometheus:
+  server:
+    # -- Data retention period
+    retention: "15d"
+
+    # -- Persistent storage for metrics data
+    persistentVolume:
+      enabled: true
+      size: 20Gi
+      # storageClassName: gp3  # Uncomment and set for your EKS storage class
+
+    # -- Resource limits
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+    # -- Enable remote-write receiver (required for k6 to push metrics)
+    extraFlags:
+      - "web.enable-remote-write-receiver"
+
+  # -- Disable components not needed for this deployment.
+  #    If you need alerting, node metrics, or kube-state-metrics,
+  #    enable them here or use your platform's existing instances.
+  alertmanager:
+    enabled: false
+  kube-state-metrics:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false

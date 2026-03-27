@@ -1,0 +1,60 @@
+# =============================================================================
+# Grafana — COMMON / PLATFORM Settings
+# =============================================================================
+# These settings represent the shared, platform-level Grafana configuration.
+# They are NOT specific to the load-testing workflow.
+#
+# If your organization already manages Grafana separately:
+#   1. Set grafana.enabled=false in values.yaml
+#   2. Ignore this file entirely
+#   3. Configure your existing Grafana with the data sources and dashboards
+#      described in grafana-loadtest-values.yaml
+#
+# If you are deploying Grafana fresh via this chart, these settings provide
+# a reasonable baseline. Adjust to match your organization's standards.
+# =============================================================================
+
+# -- Persistence: store dashboards and settings across restarts
+# Adjust storageClassName to match your cluster's storage class.
+grafana:
+  persistence:
+    enabled: true
+    size: 5Gi
+    # storageClassName: gp3  # Uncomment and set for your EKS storage class
+
+  # -- Admin credentials
+  # SECURITY-12: Do NOT hardcode passwords here in production.
+  # Use --set grafana.adminPassword=<value> or a Kubernetes Secret.
+  adminUser: admin
+  # adminPassword: <set-via-helm-install-or-secret>
+
+  # -- Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  # -- Ingress (disabled by default — enable and configure for your environment)
+  # ingress:
+  #   enabled: true
+  #   annotations:
+  #     kubernetes.io/ingress.class: alb
+  #     alb.ingress.kubernetes.io/scheme: internal
+  #   hosts:
+  #     - grafana.internal.example.com
+
+  # -- Authentication (configure for your organization)
+  # grafana.ini:
+  #   auth:
+  #     disable_login_form: false
+  #   auth.generic_oauth:
+  #     enabled: true
+  #     name: SSO
+  #     client_id: <your-client-id>
+  #     client_secret: <your-client-secret>
+  #     scopes: openid profile email
+  #     auth_url: https://your-idp.example.com/authorize
+  #     token_url: https://your-idp.example.com/token

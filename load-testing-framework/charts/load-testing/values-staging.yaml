@@ -1,0 +1,44 @@
+# =============================================================================
+# Staging Environment Overrides
+# =============================================================================
+# Usage: helm install load-testing ./load-testing-framework/charts/load-testing \
+#          -f load-testing-framework/charts/load-testing/values.yaml \
+#          -f load-testing-framework/charts/load-testing/values-staging.yaml
+# =============================================================================
+
+# -- Target services for staging
+targets:
+  default:
+    baseUrl: "http://my-service.staging.svc.cluster.local"
+
+# -- k6 defaults tuned for staging (lower resource usage)
+k6:
+  defaults:
+    parallelism: 1
+    separate: false
+
+# -- Prometheus: smaller storage for staging
+prometheus:
+  server:
+    retention: "7d"
+    persistentVolume:
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+
+# -- Grafana: smaller resources for staging
+grafana:
+  persistence:
+    size: 2Gi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
