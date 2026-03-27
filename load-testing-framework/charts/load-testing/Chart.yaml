@@ -8,18 +8,18 @@ appVersion: "1.0.0"
 dependencies:
   # k6-operator — manages k6 TestRun CRDs
   - name: k6-operator
-    version: "3.10.0"
+    version: "4.3.1"
     repository: "https://grafana.github.io/helm-charts"
     condition: k6-operator.enabled
 
   # Grafana — visualization and dashboards
   - name: grafana
-    version: "8.8.2"
+    version: "8.12.1"
     repository: "https://grafana.github.io/helm-charts"
     condition: grafana.enabled
 
   # Prometheus — metrics collection and storage
   - name: prometheus
-    version: "25.27.0"
+    version: "28.14.1"
     repository: "https://prometheus-community.github.io/helm-charts"
     condition: prometheus.enabled
