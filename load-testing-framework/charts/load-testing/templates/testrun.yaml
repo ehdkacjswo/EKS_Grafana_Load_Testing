@@ -42,11 +42,11 @@ spec:
         value: {{ (index .Values.targets (.Values.testrun.target | default "default")).baseUrl | quote }}
     resources:
       limits:
-        cpu: {{ .Values.testrun.resources.limits.cpu | default "500m" }}
-        memory: {{ .Values.testrun.resources.limits.memory | default "512Mi" }}
+        cpu: {{ (.Values.testrun).resources | default dict | dig "limits" "cpu" "500m" }}
+        memory: {{ (.Values.testrun).resources | default dict | dig "limits" "memory" "512Mi" }}
       requests:
-        cpu: {{ .Values.testrun.resources.requests.cpu | default "250m" }}
-        memory: {{ .Values.testrun.resources.requests.memory | default "256Mi" }}
+        cpu: {{ (.Values.testrun).resources | default dict | dig "requests" "cpu" "250m" }}
+        memory: {{ (.Values.testrun).resources | default dict | dig "requests" "memory" "256Mi" }}
   script:
     configMap:
       name: {{ include "load-testing.fullname" . }}-scripts-{{ .Values.testrun.scriptType }}
