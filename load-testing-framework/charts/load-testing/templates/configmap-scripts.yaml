@@ -1,7 +1,7 @@
 {{/*
   ConfigMaps for k6 test scripts.
   Each test type (smoke, load, stress, spike) gets its own ConfigMap.
-  The shared library gets a separate ConfigMap.
+  Scripts must be self-contained (no cross-ConfigMap imports).
 
   Scripts are referenced from values.yaml under the 'scripts' key.
   To add a new script:
@@ -9,23 +9,6 @@
     2. Add the filename to scripts.<type> in values.yaml
     3. Run: helm upgrade load-testing ./load-testing-framework/charts/load-testing
 */}}
-
----
-# Shared k6 library
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ include "load-testing.fullname" . }}-scripts-lib
-  namespace: {{ include "load-testing.namespace" . }}
-  labels:
-    {{- include "load-testing.labels" . | nindent 4 }}
-    app.kubernetes.io/component: k6-scripts
-    script-type: lib
-data:
-  {{- range .Values.scripts.lib }}
-  {{ . }}: |-
-    {{ $.Files.Get (printf "scripts/lib/%s" .) | nindent 4 }}
-  {{- end }}
 
 {{- $types := list "smoke" "load" "stress" "spike" }}
 {{- range $type := $types }}

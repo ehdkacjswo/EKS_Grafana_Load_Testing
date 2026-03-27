@@ -1,6 +1,5 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { defaultHeaders, responseChecks, thresholdPresets, getBaseUrl } from '../lib/helpers.js';
 
 /**
  * Spike Test — Sudden traffic surge
@@ -12,14 +11,17 @@ import { defaultHeaders, responseChecks, thresholdPresets, getBaseUrl } from '..
  */
 export const options = {
   stages: [
-    { duration: '30s', target: 5 },     // baseline
-    { duration: '30s', target: 200 },   // spike up
-    { duration: '1m', target: 200 },    // hold spike
-    { duration: '30s', target: 5 },     // drop back
-    { duration: '3m', target: 5 },      // observe recovery
-    { duration: '2m', target: 0 },      // ramp down
+    { duration: '30s', target: 5 },
+    { duration: '30s', target: 200 },
+    { duration: '1m', target: 200 },
+    { duration: '30s', target: 5 },
+    { duration: '3m', target: 5 },
+    { duration: '2m', target: 0 },
   ],
-  thresholds: thresholdPresets.spike,
+  thresholds: {
+    http_req_duration: ['p(95)<3000'],
+    http_req_failed: ['rate<0.15'],
+  },
   tags: {
     test_type: 'spike',
     environment: __ENV.ENVIRONMENT || 'staging',
@@ -27,14 +29,20 @@ export const options = {
   },
 };
 
-const BASE_URL = getBaseUrl();
+const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+
+const headers = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+};
 
 export default function () {
-  const res = http.get(`${BASE_URL}/`, {
-    headers: defaultHeaders,
-  });
+  const res = http.get(`${BASE_URL}/`, { headers });
 
-  check(res, responseChecks(res, 200));
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+    'response time < 2000ms': (r) => r.timings.duration < 2000,
+  });
 
   sleep(0.2);
 }

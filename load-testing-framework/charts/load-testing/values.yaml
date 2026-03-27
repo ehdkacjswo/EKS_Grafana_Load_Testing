@@ -49,10 +49,6 @@ k6:
 # listing them here.
 # =============================================================================
 scripts:
-  # -- Shared library files (mounted as common ConfigMap)
-  lib:
-    - helpers.js
-
   # -- Test scenarios organized by type
   smoke:
     - smoke-example.js
