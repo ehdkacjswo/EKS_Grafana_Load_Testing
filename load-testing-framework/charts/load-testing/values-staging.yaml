@@ -9,7 +9,7 @@
 # -- Target services for staging
 targets:
   default:
-    baseUrl: "http://my-service.staging.svc.cluster.local"
+    baseUrl: "http://echo-server.load-testing.svc.cluster.local"
 
 # -- k6 defaults tuned for staging (lower resource usage)
 k6:
@@ -17,12 +17,12 @@ k6:
     parallelism: 1
     separate: false
 
-# -- Prometheus: smaller storage for staging
+# -- Prometheus: staging 설정 (PVC 크기는 축소 불가하므로 base와 동일하게 유지)
 prometheus:
   server:
     retention: "7d"
     persistentVolume:
-      size: 10Gi
+      size: 20Gi
     resources:
       limits:
         cpu: 500m
@@ -31,10 +31,10 @@ prometheus:
         cpu: 250m
         memory: 512Mi
 
-# -- Grafana: smaller resources for staging
+# -- Grafana: staging 설정 (PVC 크기는 축소 불가하므로 base와 동일하게 유지)
 grafana:
   persistence:
-    size: 2Gi
+    size: 5Gi
   resources:
     limits:
       cpu: 250m
