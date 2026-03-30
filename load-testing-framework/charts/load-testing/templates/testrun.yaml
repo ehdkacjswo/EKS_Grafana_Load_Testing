@@ -36,10 +36,14 @@ spec:
     env:
       - name: K6_PROMETHEUS_RW_SERVER_URL
         value: {{ .Values.k6.prometheus.remoteWriteUrl | quote }}
-      - name: K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM
-        value: "true"
+      - name: K6_PROMETHEUS_RW_TREND_STATS
+        value: "p(50),p(90),p(95),p(99),min,max,avg"
       - name: BASE_URL
         value: {{ (index .Values.targets (.Values.testrun.target | default "default")).baseUrl | quote }}
+      - name: ENVIRONMENT
+        value: {{ .Values.testrun.environment | default "staging" | quote }}
+      - name: SERVICE
+        value: {{ .Values.testrun.service | default "default" | quote }}
     resources:
       limits:
         cpu: {{ (.Values.testrun).resources | default dict | dig "limits" "cpu" "500m" }}
@@ -51,5 +55,5 @@ spec:
     configMap:
       name: {{ include "load-testing.fullname" . }}-scripts-{{ .Values.testrun.scriptType }}
       file: {{ .Values.testrun.scriptName }}
-  arguments: --out experimental-prometheus-rw
+  arguments: --out experimental-prometheus-rw --tag test_type={{ .Values.testrun.scriptType | default "adhoc" }} --tag environment={{ .Values.testrun.environment | default "staging" }} --tag service={{ .Values.testrun.service | default "default" }}
 {{- end }}
