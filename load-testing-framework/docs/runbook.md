@@ -39,12 +39,12 @@ helm install load-testing ./load-testing-framework/charts/load-testing \
 ### 방법 A: TestRun 렌더링 후 적용
 
 ```bash
-# Smoke 테스트용 TestRun 템플릿 렌더링
+# Spike 테스트용 TestRun 템플릿 렌더링
 helm template load-testing ./load-testing-framework/charts/load-testing \
   --show-only templates/testrun.yaml \
   --set testrun.enabled=true \
-  --set testrun.scriptType=smoke \
-  --set testrun.scriptName=smoke-example.js \
+  --set testrun.scriptType=spike \
+  --set testrun.scriptName=spike-example.js \
   | kubectl apply -n load-testing -f -
 ```
 
@@ -54,14 +54,14 @@ helm template load-testing ./load-testing-framework/charts/load-testing \
 apiVersion: k6.io/v1alpha1
 kind: TestRun
 metadata:
-  name: smoke-test-run
+  name: spike-test-run
   namespace: load-testing
 spec:
   parallelism: 1
   script:
     configMap:
-      name: load-testing-scripts-smoke
-      file: smoke-example.js
+      name: load-testing-scripts-spike
+      file: spike-example.js
   runner:
     image: grafana/k6:0.54.0
     env:
