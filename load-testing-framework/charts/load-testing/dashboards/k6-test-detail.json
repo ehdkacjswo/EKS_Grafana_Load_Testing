@@ -21,7 +21,7 @@
         { "expr": "histogram_quantile(0.95, sum(rate(k6_http_req_duration_seconds[$__rate_interval])))", "legendFormat": "p95" },
         { "expr": "histogram_quantile(0.99, sum(rate(k6_http_req_duration_seconds[$__rate_interval])))", "legendFormat": "p99" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2, "gradientMode": "scheme" }, "unit": "s" } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "s" } }
     },
     {
       "title": "Response Time Trends",
