@@ -66,7 +66,7 @@ scripts:
 # =============================================================================
 targets:
   default:
-    baseUrl: "http://my-service.default.svc.cluster.local"
+    baseUrl: "http://echo-server.load-testing.svc.cluster.local"
     # Add more targets as needed:
     # api-gateway:
     #   baseUrl: "http://api-gateway.default.svc.cluster.local"
