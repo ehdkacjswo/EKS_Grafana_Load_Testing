@@ -1,34 +1,28 @@
 {
-  "annotations": {
-    "list": []
-  },
+  "annotations": { "list": [] },
   "description": "k6 Load Testing — Per-Test Detail with HTTP breakdown",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "links": [
-    {
-      "title": "Back to Overview",
-      "url": "/d/k6-load-testing-overview",
-      "type": "link"
-    }
+    { "title": "Back to Overview", "url": "/d/k6-load-testing-overview", "type": "link" }
   ],
   "panels": [
     {
-      "title": "HTTP Request Duration — Histogram",
-      "type": "histogram",
+      "title": "HTTP Request Duration — Distribution",
+      "description": "응답 시간 분포를 백분위수 밴드로 표시합니다.",
+      "type": "timeseries",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        {
-          "expr": "sum(rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m])) by (le)",
-          "legendFormat": "{{le}}",
-          "format": "heatmap"
-        }
+        { "expr": "k6_http_req_duration_p50", "legendFormat": "p50 (median)" },
+        { "expr": "k6_http_req_duration_p90", "legendFormat": "p90" },
+        { "expr": "k6_http_req_duration_p95", "legendFormat": "p95" },
+        { "expr": "k6_http_req_duration_p99", "legendFormat": "p99" },
+        { "expr": "k6_http_req_duration_min", "legendFormat": "min" },
+        { "expr": "k6_http_req_duration_max", "legendFormat": "max" }
       ],
-      "fieldConfig": {
-        "defaults": { "unit": "s" }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2, "gradientMode": "scheme" }, "unit": "ms" } }
     },
     {
       "title": "Response Time Trends",
@@ -36,26 +30,11 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        {
-          "expr": "histogram_quantile(0.50, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m]))",
-          "legendFormat": "p50"
-        },
-        {
-          "expr": "histogram_quantile(0.90, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m]))",
-          "legendFormat": "p90"
-        },
-        {
-          "expr": "histogram_quantile(0.99, rate(k6_http_req_duration_seconds_bucket{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m]))",
-          "legendFormat": "p99"
-        }
+        { "expr": "k6_http_req_duration_p50", "legendFormat": "p50" },
+        { "expr": "k6_http_req_duration_p90", "legendFormat": "p90" },
+        { "expr": "k6_http_req_duration_p99", "legendFormat": "p99" }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 10, "lineWidth": 2 },
-          "unit": "s"
-        }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "ms" } }
     },
     {
       "title": "Throughput Over Time",
@@ -63,41 +42,19 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        {
-          "expr": "sum(rate(k6_http_reqs_total{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m]))",
-          "legendFormat": "Total req/s"
-        },
-        {
-          "expr": "sum(rate(k6_http_reqs_total{expected_response=\"true\", environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m]))",
-          "legendFormat": "Successful req/s"
-        }
+        { "expr": "rate(k6_http_reqs_total[$__rate_interval])", "legendFormat": "Total req/s" }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 15, "lineWidth": 2 },
-          "unit": "reqps"
-        }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "reqps" } }
     },
     {
-      "title": "Error Breakdown by Status Code",
+      "title": "Error Rate",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        {
-          "expr": "sum by (status) (rate(k6_http_reqs_total{expected_response=\"false\", environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m]))",
-          "legendFormat": "HTTP {{status}}"
-        }
+        { "expr": "k6_http_req_failed_rate", "legendFormat": "error rate — {{instance}}" }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 30, "lineWidth": 2 },
-          "unit": "reqps"
-        }
-      }
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "fillOpacity": 30, "lineWidth": 2 }, "unit": "percentunit" } }
     },
     {
       "title": "Iteration Rate",
@@ -105,41 +62,32 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        {
-          "expr": "rate(k6_iterations_total{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}[1m])",
-          "legendFormat": "iterations/s — {{instance}}"
-        }
+        { "expr": "rate(k6_iterations_total[$__rate_interval])", "legendFormat": "iterations/s — {{instance}}" }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 10, "lineWidth": 2 },
-          "unit": "itr/s"
-        }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "itr/s" } }
+    },
+    {
+      "title": "Data Transfer",
+      "description": "k6가 송수신한 데이터량.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "rate(k6_data_received_total[$__rate_interval])", "legendFormat": "Received" },
+        { "expr": "rate(k6_data_sent_total[$__rate_interval])", "legendFormat": "Sent" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "Bps" } }
     },
     {
       "title": "VU Ramp Profile",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        {
-          "expr": "k6_vus{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}",
-          "legendFormat": "Active VUs"
-        },
-        {
-          "expr": "k6_vus_max{environment=~\"$environment\", service=~\"$service\", test_type=~\"$test_type\", scenario=~\"$scenario\"}",
-          "legendFormat": "Max VUs"
-        }
+        { "expr": "k6_vus", "legendFormat": "Active VUs" },
+        { "expr": "k6_vus_max", "legendFormat": "Max VUs" }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "fillOpacity": 20, "lineWidth": 2 },
-          "unit": "short"
-        }
-      }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 20, "lineWidth": 2 }, "unit": "short" } }
     }
   ],
   "schemaVersion": 39,
@@ -157,6 +105,7 @@
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "query": "label_values(k6_http_reqs_total, environment)",
+        "refresh": 2,
         "includeAll": true,
         "allValue": ".*"
       },
@@ -165,6 +114,7 @@
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "query": "label_values(k6_http_reqs_total, service)",
+        "refresh": 2,
         "includeAll": true,
         "allValue": ".*"
       },
@@ -173,6 +123,7 @@
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "query": "label_values(k6_http_reqs_total, test_type)",
+        "refresh": 2,
         "includeAll": true,
         "allValue": ".*"
       },
@@ -181,6 +132,7 @@
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
         "query": "label_values(k6_http_reqs_total, scenario)",
+        "refresh": 2,
         "includeAll": true,
         "allValue": ".*"
       }
