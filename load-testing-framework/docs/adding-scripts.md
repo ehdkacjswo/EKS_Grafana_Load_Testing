@@ -1,31 +1,31 @@
-# Adding k6 Test Scripts
+# k6 테스트 스크립트 추가
 
-## Script Organization
+## 스크립트 구조
 
 ```
 load-testing-framework/charts/load-testing/scripts/
-  lib/           # Shared utilities (imported by all scripts)
+  lib/           # 공용 유틸리티 (모든 스크립트에서 import)
     helpers.js
-  smoke/         # Quick health checks (1-2 VUs, ~1 min)
-  load/          # Baseline performance tests (ramping VUs, ~7 min)
-  stress/        # Breaking point tests (high VUs, ~14 min)
-  spike/         # Sudden surge tests (spike pattern, ~8 min)
+  smoke/         # 빠른 상태 확인 (1-2 VU, ~1분)
+  load/          # 기준선 성능 테스트 (VU 점진 증가, ~7분)
+  stress/        # 한계점 테스트 (높은 VU, ~14분)
+  spike/         # 급증 테스트 (스파이크 패턴, ~8분)
 ```
 
-## Adding a New Script
+## 새 스크립트 추가
 
-### 1. Create the script file
+### 1. 스크립트 파일 생성
 
-Place your `.js` file in the appropriate type directory:
+적절한 유형 디렉토리에 `.js` 파일을 생성합니다:
 
 ```bash
-# Example: new smoke test for the payments service
+# 예시: 결제 서비스용 새 smoke 테스트
 touch load-testing-framework/charts/load-testing/scripts/smoke/smoke-payments.js
 ```
 
-### 2. Write the script
+### 2. 스크립트 작성
 
-Use the shared helpers and follow the existing pattern:
+공용 헬퍼를 사용하고 기존 패턴을 따릅니다:
 
 ```javascript
 import http from 'k6/http';
@@ -54,18 +54,18 @@ export default function () {
 }
 ```
 
-### 3. Register the script in values.yaml
+### 3. values.yaml에 스크립트 등록
 
-Add the filename to the appropriate list in `load-testing-framework/charts/load-testing/values.yaml`:
+`load-testing-framework/charts/load-testing/values.yaml`의 해당 목록에 파일명을 추가합니다:
 
 ```yaml
 scripts:
   smoke:
     - smoke-example.js
-    - smoke-payments.js    # <-- add here
+    - smoke-payments.js    # <-- 여기에 추가
 ```
 
-### 4. Deploy
+### 4. 배포
 
 ```bash
 helm upgrade load-testing ./load-testing-framework/charts/load-testing \
@@ -74,7 +74,7 @@ helm upgrade load-testing ./load-testing-framework/charts/load-testing \
   -f load-testing-framework/charts/load-testing/values-staging.yaml
 ```
 
-### 5. Run
+### 5. 실행
 
 ```bash
 helm template load-testing ./load-testing-framework/charts/load-testing \
@@ -85,18 +85,18 @@ helm template load-testing ./load-testing-framework/charts/load-testing \
   | kubectl apply -n load-testing -f -
 ```
 
-## Conventions
+## 규칙
 
-- Name scripts as `<type>-<service-or-scenario>.js`
-- Always set `tags.test_type`, `tags.environment`, and `tags.service` in options
-- Use `getBaseUrl()` for the target URL (reads `BASE_URL` env var)
-- Use `thresholdPresets.<type>` for standard thresholds
-- Import shared helpers from `../lib/helpers.js`
-- Keep scripts focused — one scenario per file
+- 스크립트 이름은 `<유형>-<서비스 또는 시나리오>.js` 형식으로 지정
+- options에 항상 `tags.test_type`, `tags.environment`, `tags.service` 설정
+- 대상 URL은 `getBaseUrl()` 사용 (`BASE_URL` 환경 변수 참조)
+- 표준 임계값은 `thresholdPresets.<유형>` 사용
+- 공용 헬퍼는 `../lib/helpers.js`에서 import
+- 스크립트는 하나의 시나리오에 집중 — 파일당 하나의 시나리오
 
-## Adding a New Target Service
+## 새 대상 서비스 추가
 
-1. Add the service to `targets` in `values.yaml`:
+1. `values.yaml`의 `targets`에 서비스를 추가합니다:
 
 ```yaml
 targets:
@@ -106,7 +106,7 @@ targets:
     baseUrl: "http://payments.default.svc.cluster.local"
 ```
 
-2. Reference it when running a test:
+2. 테스트 실행 시 참조합니다:
 
 ```bash
 --set testrun.target=payments
