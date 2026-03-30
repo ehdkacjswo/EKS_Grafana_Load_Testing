@@ -39,6 +39,7 @@ prometheus:
     # -- Enable remote-write receiver (required for k6 to push metrics)
     extraFlags:
       - "web.enable-remote-write-receiver"
+      - "enable-feature=native-histograms"
 
   # -- Disable components not needed for this deployment.
   #    If you need alerting, node metrics, or kube-state-metrics,

@@ -172,6 +172,7 @@ prometheus:
     remoteWrite: []
     extraFlags:
       - "web.enable-remote-write-receiver"
+      - "enable-feature=native-histograms"
 
   # Disable components not needed for load-testing metrics
   alertmanager:
