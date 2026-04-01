@@ -1,6 +1,6 @@
 {
   "annotations": { "list": [] },
-  "description": "EKS Node Health — CPU pressure, memory pressure, disk pressure, and node conditions",
+  "description": "EKS Node Health — PID pressure, memory pressure, disk pressure, and node conditions",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -12,7 +12,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$node\"}[$__rate_interval])) by (instance)) * 100", "legendFormat": "{{instance}}" }
+        { "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", node=~\"$node\"}[$__rate_interval])) by (node)) * 100", "legendFormat": "{{node}}" }
       ],
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "percent", "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
     },
@@ -22,17 +22,17 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\"$node\"} / node_memory_MemTotal_bytes{instance=~\"$node\"})) * 100", "legendFormat": "{{instance}}" }
+        { "expr": "(1 - (node_memory_MemAvailable_bytes{node=~\"$node\"} / node_memory_MemTotal_bytes{node=~\"$node\"})) * 100", "legendFormat": "{{node}}" }
       ],
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "percent", "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
     },
     {
-      "title": "Node CPU Pressure",
+      "title": "Node PID Pressure",
       "type": "stat",
       "gridPos": { "h": 5, "w": 8, "x": 0, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "sum(kube_node_status_condition{condition=\"CPUPressure\", status=\"true\"}) or vector(0)", "legendFormat": "CPU Pressure", "instant": true }
+        { "expr": "sum(kube_node_status_condition{condition=\"PIDPressure\", status=\"true\"}) or vector(0)", "legendFormat": "PID Pressure", "instant": true }
       ],
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
     },
@@ -62,7 +62,7 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 13 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "sum(kube_node_status_condition{condition=\"CPUPressure\", status=\"true\"}) or vector(0)", "legendFormat": "CPU Pressure" },
+        { "expr": "sum(kube_node_status_condition{condition=\"PIDPressure\", status=\"true\"}) or vector(0)", "legendFormat": "PID Pressure" },
         { "expr": "sum(kube_node_status_condition{condition=\"MemoryPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Memory Pressure" },
         { "expr": "sum(kube_node_status_condition{condition=\"DiskPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Disk Pressure" },
         { "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"})", "legendFormat": "Ready" }

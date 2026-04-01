@@ -87,7 +87,8 @@
       "targets": [
         { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}", "instant": true, "format": "table" }
       ],
-      "fieldConfig": { "defaults": { "unit": "short" } }
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [{ "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "displayName", "value": "Restart Count" }] }, { "matcher": { "id": "byName", "options": "Time" }, "properties": [{ "id": "custom.hidden", "value": true }] }] },
+      "transformations": [{ "id": "sortBy", "options": { "fields": {}, "sort": [{ "field": "Value", "desc": true }] } }]
     }
   ],
   "schemaVersion": 39,
