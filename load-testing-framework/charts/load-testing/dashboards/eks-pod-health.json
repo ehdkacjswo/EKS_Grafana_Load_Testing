@@ -1,6 +1,6 @@
 {
   "annotations": { "list": [] },
-  "description": "EKS Pod Health — errors (restarts, OOMKilled, not ready) and saturation (CPU/memory vs limits)",
+  "description": "EKS Pod Health — errors (restarts, OOMKilled, not ready), saturation (CPU/memory vs requests/limits), and network I/O",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -53,6 +53,7 @@
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         { "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"}[$__rate_interval])) by (pod)", "legendFormat": "usage — {{pod}}" },
+        { "expr": "sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}) by (pod)", "legendFormat": "request — {{pod}}" },
         { "expr": "sum(kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}) by (pod)", "legendFormat": "limit — {{pod}}" }
       ],
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "short" } }
@@ -64,14 +65,35 @@
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         { "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"}) by (pod)", "legendFormat": "usage — {{pod}}" },
+        { "expr": "sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"}) by (pod)", "legendFormat": "request — {{pod}}" },
         { "expr": "sum(kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"}) by (pod)", "legendFormat": "limit — {{pod}}" }
       ],
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "bytes" } }
     },
     {
+      "title": "Network Receive",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(rate(container_network_receive_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod)", "legendFormat": "rx — {{pod}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "Bps" } }
+    },
+    {
+      "title": "Network Transmit",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(rate(container_network_transmit_bytes_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod)", "legendFormat": "tx — {{pod}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "Bps" } }
+    },
+    {
       "title": "Container Not Ready",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         { "expr": "count(kube_pod_container_status_ready{namespace=~\"$namespace\", pod=~\"$pod\"} == 0) or vector(0)", "legendFormat": "Not Ready" }
@@ -81,7 +103,7 @@
     {
       "title": "Pod Restarts Table",
       "type": "table",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 38 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\"}) by (namespace, pod) > 0", "legendFormat": "{{namespace}}/{{pod}}", "instant": true, "format": "table" }
