@@ -34,12 +34,55 @@ helm install load-testing ./load-testing-framework/charts/load-testing \
   --set grafana.adminPassword=<비밀번호>
 ```
 
-## 2. 부하 테스트 실행
+## 2. 에코 서버 (내장 테스트 대상)
+
+프레임워크에는 실제 애플리케이션 없이도 대시보드를 검증할 수 있는 내장 에코 서버가 포함되어 있습니다.
+에코 서버는 Prometheus 메트릭(`http_requests_total`, `http_request_duration_seconds_bucket`)을 `/metrics` 엔드포인트에서 노출하며, 이를 통해 EKS Application 대시보드에 데이터가 표시됩니다.
+
+### 에코 서버 활성화/비활성화
+
+에코 서버는 기본적으로 활성화되어 있습니다 (`echoServer.enabled: true`).
+실제 애플리케이션을 대상으로 테스트할 때는 비활성화하세요:
+
+```bash
+# 비활성화
+helm upgrade load-testing ./load-testing-framework/charts/load-testing \
+  -n load-testing \
+  --set echoServer.enabled=false \
+  --set targets.default.baseUrl="http://my-real-service.default.svc.cluster.local"
+```
+
+### 에코 서버 상태 확인
+
+```bash
+# Pod 상태 확인
+kubectl get pods -n load-testing -l app=echo-server
+
+# 서비스 확인
+kubectl get svc echo-server -n load-testing
+
+# 메트릭 엔드포인트 확인
+kubectl exec -n load-testing deploy/echo-server -- wget -qO- http://localhost:8080/metrics
+```
+
+### Prometheus 스크래핑 확인
+
+에코 서버의 메트릭이 Prometheus에 수집되고 있는지 확인:
+
+```bash
+# Prometheus 포트 포워딩
+kubectl port-forward -n load-testing svc/load-testing-prometheus-server 9090:80
+
+# 브라우저에서 http://localhost:9090/targets 접속
+# echo-server 타겟이 "UP" 상태인지 확인
+```
+
+## 3. 부하 테스트 실행
 
 ### 방법 A: TestRun 렌더링 후 적용
 
 ```bash
-# Spike 테스트용 TestRun 템플릿 렌더링
+# Spike 테스트용 TestRun 템플릿 렌더링 (에코 서버 대상)
 helm template load-testing ./load-testing-framework/charts/load-testing \
   --show-only templates/testrun.yaml \
   --set testrun.enabled=true \
@@ -47,6 +90,9 @@ helm template load-testing ./load-testing-framework/charts/load-testing \
   --set testrun.scriptName=spike-example.js \
   | kubectl apply -n load-testing -f -
 ```
+
+기본 대상은 에코 서버(`http://echo-server.load-testing.svc.cluster.local`)입니다.
+다른 서비스를 대상으로 테스트하려면 `testrun.target`을 지정하거나 `targets`에 새 항목을 추가하세요.
 
 ### 방법 B: TestRun 직접 적용
 
@@ -84,7 +130,7 @@ kubectl get testrun -n load-testing -w
 kubectl logs -n load-testing -l app=k6 -f
 ```
 
-## 3. Grafana에서 결과 확인
+## 4. Grafana에서 결과 확인
 
 ```bash
 # Grafana 포트 포워딩
@@ -96,7 +142,7 @@ http://localhost:3000 접속 후 "Load Testing" 폴더로 이동
 - k6 테스트 상세: 테스트별 분석, 히스토그램, 오류 코드
 - Pod 모니터링: Pod CPU/메모리 사용량, 네트워크 I/O, 재시작 횟수, Pod 상태
 
-## 4. 프레임워크 업그레이드
+## 5. 프레임워크 업그레이드
 
 ```bash
 helm dependency update ./load-testing-framework/charts/load-testing
@@ -107,7 +153,7 @@ helm upgrade load-testing ./load-testing-framework/charts/load-testing \
   -f load-testing-framework/charts/load-testing/values-staging.yaml
 ```
 
-## 5. 롤백
+## 6. 롤백
 
 ```bash
 # 리비전 목록 확인
@@ -117,14 +163,14 @@ helm history load-testing -n load-testing
 helm rollback load-testing <리비전> -n load-testing
 ```
 
-## 6. 제거
+## 7. 제거
 
 ```bash
 helm uninstall load-testing -n load-testing
 kubectl delete namespace load-testing
 ```
 
-## 7. 클러스터 초기화 (제거 후 재설치)
+## 8. 클러스터 초기화 (제거 후 재설치)
 
 테스트 환경을 완전히 초기화하고 처음부터 다시 구성할 때 사용합니다.
 
@@ -180,7 +226,7 @@ kubectl port-forward -n load-testing svc/load-testing-grafana 3000:80
 
 > **참고**: 네임스페이스 삭제 시 Grafana PVC도 함께 삭제되므로 기존 대시보드 설정(즐겨찾기 등)이 초기화됩니다. 대시보드 JSON 자체는 Helm 차트에서 자동 프로비저닝되므로 재설치 후 복원됩니다.
 
-## 8. 문제 해결
+## 9. 문제 해결
 
 | 증상 | 확인 방법 |
 |---|---|
@@ -188,3 +234,5 @@ kubectl port-forward -n load-testing svc/load-testing-grafana 3000:80
 | Grafana에 메트릭 없음 | Prometheus 실행 확인: `kubectl get pods -n load-testing` |
 | k6 Pod CrashLoopBackOff | 스크립트 구문 확인: `kubectl logs <Pod> -n load-testing` |
 | 대시보드에 데이터 없음 | Grafana의 데이터 소스 URL이 Prometheus 서비스와 일치하는지 확인 |
+| 에코 서버 Pod 미실행 | `echoServer.enabled: true` 확인, `kubectl describe pod -l app=echo-server -n load-testing` |
+| EKS Application 대시보드 비어 있음 | 에코 서버 Pod 실행 확인, Prometheus targets에서 echo-server가 UP인지 확인, 트래픽 발생 필요 (k6 테스트 실행) |

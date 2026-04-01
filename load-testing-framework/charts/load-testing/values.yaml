@@ -60,6 +60,30 @@ scripts:
     - spike-example.js
 
 # =============================================================================
+# Echo Server — built-in load-test target
+# =============================================================================
+# A lightweight HTTP service with Prometheus metrics (/metrics endpoint).
+# Exposes http_requests_total and http_request_duration_seconds_bucket,
+# which feed the EKS Application dashboard.
+# Enable this when no real application is available for testing.
+# =============================================================================
+echoServer:
+  enabled: true
+  image:
+    repository: quay.io/brancz/prometheus-example-app
+    tag: "v0.5.0"
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8080
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# =============================================================================
 # Target service configuration
 # =============================================================================
 # Define target services for load tests. Scripts reference these by name.
@@ -196,3 +220,10 @@ prometheus:
             - targets: []
               labels:
                 source: k6
+        - job_name: echo-server
+          scrape_interval: 5s
+          static_configs:
+            - targets:
+                - "echo-server.load-testing.svc.cluster.local:80"
+              labels:
+                source: echo-server

@@ -45,6 +45,13 @@ prometheus:
             - targets: []
               labels:
                 source: k6
+        - job_name: echo-server
+          scrape_interval: 5s
+          static_configs:
+            - targets:
+                - "echo-server.load-testing.svc.cluster.local:80"
+              labels:
+                source: echo-server
         - job_name: kube-state-metrics
           scrape_interval: 15s
           static_configs:

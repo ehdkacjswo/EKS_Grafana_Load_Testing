@@ -51,7 +51,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "k6_http_req_failed_rate", "legendFormat": "error rate — {{instance}}" }
+        { "expr": "sum(rate(k6_http_reqs_total{expected_response=\"false\"}[$__rate_interval])) / sum(rate(k6_http_reqs_total[$__rate_interval]))", "legendFormat": "error rate" }
       ],
       "fieldConfig": { "defaults": { "color": { "fixedColor": "red", "mode": "fixed" }, "custom": { "fillOpacity": 30, "lineWidth": 2 }, "unit": "percentunit" } }
     },

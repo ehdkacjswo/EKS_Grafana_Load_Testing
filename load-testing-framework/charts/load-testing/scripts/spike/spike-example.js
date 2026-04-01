@@ -7,6 +7,9 @@ import { check, sleep } from 'k6';
  * Purpose: Simulate a sudden spike in traffic to test auto-scaling,
  *          circuit breakers, and recovery behavior.
  *
+ * Traffic mix: ~80% normal requests (/) → 200, ~20% error requests (/err) → 404.
+ * This ensures the EKS Application dashboard error-rate panels receive data.
+ *
  * VUs: ramp 0→5→200→5→0 | Duration: ~8 minutes | Expected: recovery after spike
  */
 export const options = {
@@ -20,7 +23,7 @@ export const options = {
   ],
   thresholds: {
     http_req_duration: ['p(95)<3000'],
-    http_req_failed: ['rate<0.15'],
+    http_req_failed: ['rate<0.30'],
   },
   tags: {
     test_type: 'spike',
@@ -30,6 +33,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+const ERROR_RATE = parseFloat(__ENV.ERROR_RATE || '0.2'); // 20% error traffic
 
 const headers = {
   'Content-Type': 'application/json',
@@ -37,12 +41,20 @@ const headers = {
 };
 
 export default function () {
-  const res = http.get(`${BASE_URL}/`, { headers });
-
-  check(res, {
-    'status is 200': (r) => r.status === 200,
-    'response time < 2000ms': (r) => r.timings.duration < 2000,
-  });
+  if (Math.random() < ERROR_RATE) {
+    // ~20% of requests hit the error endpoint (returns 404)
+    const errRes = http.get(`${BASE_URL}/err`, { headers });
+    check(errRes, {
+      'error endpoint returns 404': (r) => r.status === 404,
+    });
+  } else {
+    // ~80% of requests hit the normal endpoint (returns 200)
+    const res = http.get(`${BASE_URL}/`, { headers });
+    check(res, {
+      'status is 200': (r) => r.status === 200,
+      'response time < 2000ms': (r) => r.timings.duration < 2000,
+    });
+  }
 
   sleep(0.2);
 }
