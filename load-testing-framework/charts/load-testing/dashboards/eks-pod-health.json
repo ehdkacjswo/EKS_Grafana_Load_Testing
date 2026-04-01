@@ -1,6 +1,6 @@
 {
   "annotations": { "list": [] },
-  "description": "EKS Pod Health — restart count, pending status, OOMKilled tracking",
+  "description": "EKS Pod Health — errors (restarts, OOMKilled, not ready) and saturation (CPU/memory vs limits)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -14,7 +14,7 @@
       "targets": [
         { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\"}) by (pod)", "legendFormat": "{{pod}}" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2, "drawStyle": "line", "showPoints": "auto" }, "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 3 }, { "color": "red", "value": 10 }] } } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 3 }, { "color": "red", "value": 10 }] } } }
     },
     {
       "title": "Pod Restart Rate (per minute)",
@@ -24,7 +24,7 @@
       "targets": [
         { "expr": "sum(rate(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod) * 60", "legendFormat": "{{pod}}" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "short" } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "short" } }
     },
     {
       "title": "Pod Count",
@@ -47,29 +47,41 @@
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
     },
     {
-      "title": "Pod Count Over Time",
+      "title": "Pod CPU Usage vs Limits",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=~\"$phase\"} == 1) or vector(0)", "legendFormat": "{{phase}}" }
+        { "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"}[$__rate_interval])) by (pod)", "legendFormat": "usage — {{pod}}" },
+        { "expr": "sum(kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"cpu\"}) by (pod)", "legendFormat": "limit — {{pod}}" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "orange" }, "custom": { "fillOpacity": 20, "lineWidth": 2 }, "unit": "short" } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "short" } }
     },
     {
-      "title": "Container Not Ready",
+      "title": "Pod Memory Usage vs Limits",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
+        { "expr": "sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$pod\", container!=\"\"}) by (pod)", "legendFormat": "usage — {{pod}}" },
+        { "expr": "sum(kube_pod_container_resource_limits{namespace=~\"$namespace\", pod=~\"$pod\", resource=\"memory\"}) by (pod)", "legendFormat": "limit — {{pod}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "bytes" } }
+    },
+    {
+      "title": "Container Not Ready",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
         { "expr": "count(kube_pod_container_status_ready{namespace=~\"$namespace\", pod=~\"$pod\"} == 0) or vector(0)", "legendFormat": "Not Ready" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "short" } }
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 15, "lineWidth": 2, "spanNulls": true }, "unit": "short" } }
     },
     {
       "title": "Pod Restarts Table",
       "type": "table",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\"}) by (namespace, pod) > 0", "legendFormat": "{{namespace}}/{{pod}}", "instant": true, "format": "table" }

@@ -1,6 +1,6 @@
 {
   "annotations": { "list": [] },
-  "description": "EKS Node Health — PID pressure, memory pressure, disk pressure, and node conditions",
+  "description": "EKS Node Health — saturation (CPU, memory, allocatable vs requested), traffic (network I/O), and errors (node conditions)",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -24,7 +24,7 @@
       "targets": [
         { "expr": "(1 - (node_memory_MemAvailable_bytes{node=~\"$node\"} / node_memory_MemTotal_bytes{node=~\"$node\"})) * 100", "legendFormat": "{{node}}" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "percent", "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 15, "lineWidth": 2, "spanNulls": true }, "unit": "percent", "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
     },
     {
       "title": "Node PID Pressure",
@@ -57,17 +57,24 @@
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
     },
     {
-      "title": "Node Conditions Over Time",
+      "title": "Node Network Received",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 13 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "sum(kube_node_status_condition{condition=\"PIDPressure\", status=\"true\"}) or vector(0)", "legendFormat": "PID Pressure" },
-        { "expr": "sum(kube_node_status_condition{condition=\"MemoryPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Memory Pressure" },
-        { "expr": "sum(kube_node_status_condition{condition=\"DiskPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Disk Pressure" },
-        { "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"})", "legendFormat": "Ready" }
+        { "expr": "sum(rate(node_network_receive_bytes_total{node=~\"$node\", device!~\"lo|veth.*|docker.*|flannel.*|cali.*|cbr.*\"}[$__rate_interval])) by (node)", "legendFormat": "{{node}}" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "short" } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "Bps" } }
+    },
+    {
+      "title": "Node Network Transmitted",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(rate(node_network_transmit_bytes_total{node=~\"$node\", device!~\"lo|veth.*|docker.*|flannel.*|cali.*|cbr.*\"}[$__rate_interval])) by (node)", "legendFormat": "{{node}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "Bps" } }
     },
     {
       "title": "Allocatable vs Requested CPU (cores)",
@@ -78,7 +85,7 @@
         { "expr": "sum(kube_node_status_allocatable{resource=\"cpu\", node=~\"$node\"})", "legendFormat": "Allocatable" },
         { "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\", node=~\"$node\"})", "legendFormat": "Requested" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "short" } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "short" } }
     },
     {
       "title": "Allocatable vs Requested Memory",
@@ -89,7 +96,7 @@
         { "expr": "sum(kube_node_status_allocatable{resource=\"memory\", node=~\"$node\"})", "legendFormat": "Allocatable" },
         { "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\", node=~\"$node\"})", "legendFormat": "Requested" }
       ],
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "bytes" } }
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "drawStyle": "line", "showPoints": "never", "fillOpacity": 10, "lineWidth": 2, "spanNulls": true }, "unit": "bytes" } }
     }
   ],
   "schemaVersion": 39,
