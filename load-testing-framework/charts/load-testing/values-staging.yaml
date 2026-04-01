@@ -30,6 +30,31 @@ prometheus:
       requests:
         cpu: 250m
         memory: 512Mi
+  # Enable kube-state-metrics and node-exporter for EKS dashboards
+  kube-state-metrics:
+    enabled: true
+  prometheus-node-exporter:
+    enabled: true
+  # Add scrape configs for kube-state-metrics and node-exporter
+  serverFiles:
+    prometheus.yml:
+      scrape_configs:
+        - job_name: k6-metrics
+          scrape_interval: 5s
+          static_configs:
+            - targets: []
+              labels:
+                source: k6
+        - job_name: kube-state-metrics
+          scrape_interval: 15s
+          static_configs:
+            - targets:
+                - "load-testing-prometheus-kube-state-metrics.load-testing.svc.cluster.local:8080"
+        - job_name: node-exporter
+          scrape_interval: 15s
+          static_configs:
+            - targets:
+                - "load-testing-prometheus-node-exporter.load-testing.svc.cluster.local:9100"
 
 # -- Grafana: staging 설정 (PVC 크기는 축소 불가하므로 base와 동일하게 유지)
 grafana:

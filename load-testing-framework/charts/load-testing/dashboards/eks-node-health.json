@@ -1,0 +1,120 @@
+{
+  "annotations": { "list": [] },
+  "description": "EKS Node Health — CPU pressure, memory pressure, disk pressure, and node conditions",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "Node CPU Utilization (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "(1 - avg(rate(node_cpu_seconds_total{mode=\"idle\", instance=~\"$node\"}[$__rate_interval])) by (instance)) * 100", "legendFormat": "{{instance}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "percent", "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
+    },
+    {
+      "title": "Node Memory Utilization (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\"$node\"} / node_memory_MemTotal_bytes{instance=~\"$node\"})) * 100", "legendFormat": "{{instance}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "percent", "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 90 }] } } }
+    },
+    {
+      "title": "Node CPU Pressure",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_node_status_condition{condition=\"CPUPressure\", status=\"true\"}) or vector(0)", "legendFormat": "CPU Pressure", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "title": "Node Memory Pressure",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_node_status_condition{condition=\"MemoryPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Memory Pressure", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "title": "Node Disk Pressure",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_node_status_condition{condition=\"DiskPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Disk Pressure", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "title": "Node Conditions Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 13 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_node_status_condition{condition=\"CPUPressure\", status=\"true\"}) or vector(0)", "legendFormat": "CPU Pressure" },
+        { "expr": "sum(kube_node_status_condition{condition=\"MemoryPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Memory Pressure" },
+        { "expr": "sum(kube_node_status_condition{condition=\"DiskPressure\", status=\"true\"}) or vector(0)", "legendFormat": "Disk Pressure" },
+        { "expr": "sum(kube_node_status_condition{condition=\"Ready\", status=\"true\"})", "legendFormat": "Ready" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "short" } }
+    },
+    {
+      "title": "Allocatable vs Requested CPU (cores)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_node_status_allocatable{resource=\"cpu\", node=~\"$node\"})", "legendFormat": "Allocatable" },
+        { "expr": "sum(kube_pod_container_resource_requests{resource=\"cpu\", node=~\"$node\"})", "legendFormat": "Requested" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "short" } }
+    },
+    {
+      "title": "Allocatable vs Requested Memory",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_node_status_allocatable{resource=\"memory\", node=~\"$node\"})", "legendFormat": "Allocatable" },
+        { "expr": "sum(kube_pod_container_resource_requests{resource=\"memory\", node=~\"$node\"})", "legendFormat": "Requested" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "bytes" } }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["eks", "node", "health", "load-testing"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus-LoadTesting", "value": "Prometheus-LoadTesting" }
+      },
+      {
+        "name": "node",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(kube_node_info, node)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "EKS Node Health",
+  "uid": "eks-node-health"
+}

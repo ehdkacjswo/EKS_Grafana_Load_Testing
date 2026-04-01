@@ -32,4 +32,60 @@ metadata:
 data:
   k6-test-detail.json: |-
     {{ .Files.Get "dashboards/k6-test-detail.json" | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "load-testing.fullname" . }}-dashboards-pod-monitoring
+  namespace: {{ include "load-testing.namespace" . }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+    grafana_dashboard: "load-testing"
+  annotations:
+    grafana_folder: "Load Testing"
+data:
+  pod-monitoring.json: |-
+    {{ .Files.Get "dashboards/pod-monitoring.json" | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "load-testing.fullname" . }}-dashboards-eks-pod-health
+  namespace: {{ include "load-testing.namespace" . }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+    grafana_dashboard: "load-testing"
+  annotations:
+    grafana_folder: "Load Testing"
+data:
+  eks-pod-health.json: |-
+    {{ .Files.Get "dashboards/eks-pod-health.json" | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "load-testing.fullname" . }}-dashboards-eks-node-health
+  namespace: {{ include "load-testing.namespace" . }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+    grafana_dashboard: "load-testing"
+  annotations:
+    grafana_folder: "Load Testing"
+data:
+  eks-node-health.json: |-
+    {{ .Files.Get "dashboards/eks-node-health.json" | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "load-testing.fullname" . }}-dashboards-eks-application
+  namespace: {{ include "load-testing.namespace" . }}
+  labels:
+    {{- include "load-testing.labels" . | nindent 4 }}
+    grafana_dashboard: "load-testing"
+  annotations:
+    grafana_folder: "Load Testing"
+data:
+  eks-application.json: |-
+    {{ .Files.Get "dashboards/eks-application.json" | nindent 4 }}
 {{- end }}

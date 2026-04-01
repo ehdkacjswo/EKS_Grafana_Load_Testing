@@ -1,0 +1,127 @@
+{
+  "annotations": { "list": [] },
+  "description": "EKS Pod Health — restart count, pending status, OOMKilled tracking",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "Pod Restart Count (Total)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\"}) by (pod)", "legendFormat": "{{pod}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2, "drawStyle": "line", "showPoints": "auto" }, "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 3 }, { "color": "red", "value": 10 }] } } }
+    },
+    {
+      "title": "Pod Restart Rate (per minute)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(rate(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\"}[$__rate_interval])) by (pod) * 60", "legendFormat": "{{pod}}" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "short" } }
+    },
+    {
+      "title": "Pods in Pending State",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Pending\"} == 1) or vector(0)", "legendFormat": "Pending", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } }
+    },
+    {
+      "title": "Pods by Phase",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Running\"} == 1) or vector(0)", "legendFormat": "Running", "instant": true },
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Pending\"} == 1) or vector(0)", "legendFormat": "Pending", "instant": true },
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Failed\"} == 1) or vector(0)", "legendFormat": "Failed", "instant": true },
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Succeeded\"} == 1) or vector(0)", "legendFormat": "Succeeded", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "title": "OOMKilled Containers",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_pod_container_status_last_terminated_reason{namespace=~\"$namespace\", reason=\"OOMKilled\"}) or vector(0)", "legendFormat": "OOMKilled", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "title": "Pending Pods Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Pending\"} == 1) or vector(0)", "legendFormat": "Pending" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "orange" }, "custom": { "fillOpacity": 20, "lineWidth": 2 }, "unit": "short" } }
+    },
+    {
+      "title": "Container Not Ready",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "count(kube_pod_container_status_ready{namespace=~\"$namespace\", pod=~\"$pod\"} == 0) or vector(0)", "legendFormat": "Not Ready" }
+      ],
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "red" }, "custom": { "fillOpacity": 15, "lineWidth": 2 }, "unit": "short" } }
+    },
+    {
+      "title": "Pod Restarts Table",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "targets": [
+        { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}", "instant": true, "format": "table" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["eks", "pod", "health", "load-testing"],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus-LoadTesting", "value": "Prometheus-LoadTesting" }
+      },
+      {
+        "name": "namespace",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(kube_pod_info, namespace)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "pod",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(kube_pod_info{namespace=~\"$namespace\"}, pod)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "EKS Pod Health",
+  "uid": "eks-pod-health"
+}

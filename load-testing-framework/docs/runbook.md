@@ -94,6 +94,7 @@ kubectl port-forward -n load-testing svc/load-testing-grafana 3000:80
 http://localhost:3000 접속 후 "Load Testing" 폴더로 이동
 - k6 개요: 요청 속도, 지연시간 백분위수, 오류율, VU 수
 - k6 테스트 상세: 테스트별 분석, 히스토그램, 오류 코드
+- Pod 모니터링: Pod CPU/메모리 사용량, 네트워크 I/O, 재시작 횟수, Pod 상태
 
 ## 4. 프레임워크 업그레이드
 
@@ -123,7 +124,63 @@ helm uninstall load-testing -n load-testing
 kubectl delete namespace load-testing
 ```
 
-## 7. 문제 해결
+## 7. 클러스터 초기화 (제거 후 재설치)
+
+테스트 환경을 완전히 초기화하고 처음부터 다시 구성할 때 사용합니다.
+
+### 스테이징
+
+```bash
+# 1. 기존 릴리스 제거
+helm uninstall load-testing -n load-testing
+
+# 2. 네임스페이스 삭제 (PVC, ConfigMap 등 모든 리소스 정리)
+kubectl delete namespace load-testing
+
+# 3. 네임스페이스 삭제 완료 대기
+kubectl wait --for=delete namespace/load-testing --timeout=120s
+
+# 4. Helm 의존성 업데이트
+helm dependency update ./load-testing-framework/charts/load-testing
+
+# 5. 재설치
+helm install load-testing ./load-testing-framework/charts/load-testing \
+  -n load-testing --create-namespace \
+  -f load-testing-framework/charts/load-testing/values.yaml \
+  -f load-testing-framework/charts/load-testing/values-staging.yaml \
+  --set grafana.adminPassword=<비밀번호>
+```
+
+### 프로덕션
+
+```bash
+helm uninstall load-testing -n load-testing
+kubectl delete namespace load-testing
+kubectl wait --for=delete namespace/load-testing --timeout=120s
+helm dependency update ./load-testing-framework/charts/load-testing
+helm install load-testing ./load-testing-framework/charts/load-testing \
+  -n load-testing --create-namespace \
+  -f load-testing-framework/charts/load-testing/values.yaml \
+  -f load-testing-framework/charts/load-testing/values-production.yaml \
+  --set grafana.adminPassword=<비밀번호>
+```
+
+### 설치 확인
+
+```bash
+# 모든 Pod가 Running 상태인지 확인
+kubectl get pods -n load-testing
+
+# Grafana, Prometheus, k6-operator 서비스 확인
+kubectl get svc -n load-testing
+
+# Grafana 접속 테스트
+kubectl port-forward -n load-testing svc/load-testing-grafana 3000:80
+```
+
+> **참고**: 네임스페이스 삭제 시 Grafana PVC도 함께 삭제되므로 기존 대시보드 설정(즐겨찾기 등)이 초기화됩니다. 대시보드 JSON 자체는 Helm 차트에서 자동 프로비저닝되므로 재설치 후 복원됩니다.
+
+## 8. 문제 해결
 
 | 증상 | 확인 방법 |
 |---|---|
