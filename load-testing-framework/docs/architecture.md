@@ -60,10 +60,14 @@ load-testing-framework/
       namespace.yaml             # 네임스페이스 생성
       configmap-scripts.yaml     # k6 스크립트를 ConfigMap으로 배포
       testrun.yaml               # k6 TestRun CRD 템플릿
+      echo-server.yaml           # 내장 에코 서버 (테스트 대상)
       grafana-dashboards-configmap.yaml  # 대시보드 프로비저닝
     dashboards/
       k6-overview.json           # 개요 대시보드
       k6-test-detail.json        # 상세 대시보드
+      eks-application.json       # EKS 애플리케이션 대시보드
+      eks-pod-health.json        # EKS Pod 상태 대시보드
+      eks-node-health.json       # EKS 노드 상태 대시보드
     scripts/                     # k6 테스트 스크립트 (원본)
       lib/helpers.js             # 공용 k6 유틸리티
       smoke/                     # Smoke 테스트 스크립트
@@ -78,6 +82,9 @@ load-testing-framework/
       prometheus-loadtest-values.yaml   # 부하 테스트 Prometheus 설정
   docs/
     runbook.md                   # 운영 런북
+    adding-scripts.md            # 스크립트 작성 가이드
+    architecture.md              # 이 문서
+    local-testing.md             # 로컬 테스트 가이드
     adding-scripts.md            # 스크립트 작성 가이드
     architecture.md              # 이 문서
   README.md                      # 프로젝트 README

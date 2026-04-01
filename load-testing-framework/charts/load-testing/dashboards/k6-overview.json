@@ -75,7 +75,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "sum(rate(k6_http_reqs_total{expected_response=\"false\"}[$__rate_interval])) / sum(rate(k6_http_reqs_total[$__rate_interval]))", "legendFormat": "Error %", "instant": true }
+        { "expr": "sum(increase(k6_http_reqs_total{expected_response=\"false\"}[1h])) / sum(increase(k6_http_reqs_total[1h]))", "legendFormat": "Error %", "instant": true }
       ],
       "fieldConfig": { "defaults": { "unit": "percentunit" } }
     },

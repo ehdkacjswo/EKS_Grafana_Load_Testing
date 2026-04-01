@@ -41,22 +41,9 @@ helm install load-testing ./load-testing-framework/charts/load-testing \
 kubectl get pods -n load-testing -w
 ```
 
-## 3. 모의 대상 서비스 배포
+## 3. Smoke 테스트 실행
 
-k6가 요청을 보낼 대상이 필요합니다. 간단한 nginx echo 서버를 배포합니다:
-
-```bash
-kubectl run echo-server --image=nginx:1.27-alpine --port=80 -n load-testing
-kubectl expose pod echo-server --port=80 --name=echo-server -n load-testing
-```
-
-실행 확인:
-
-```bash
-kubectl get pod echo-server -n load-testing
-```
-
-## 4. Smoke 테스트 실행
+차트에 내장된 에코 서버(`echoServer.enabled: true`)가 기본 테스트 대상으로 자동 배포됩니다.
 
 ```bash
 helm template load-testing ./load-testing-framework/charts/load-testing \
@@ -78,7 +65,7 @@ kubectl get testrun -n load-testing -w
 kubectl logs -n load-testing -l app=k6 -f
 ```
 
-## 5. Grafana에서 결과 확인
+## 4. Grafana에서 결과 확인
 
 ```bash
 kubectl port-forward -n load-testing svc/load-testing-grafana 3000:80
@@ -89,7 +76,7 @@ kubectl port-forward -n load-testing svc/load-testing-grafana 3000:80
 - 비밀번호: `admin123` (또는 2단계에서 설정한 값)
 - "Load Testing" 폴더에서 대시보드 확인
 
-## 6. 다른 테스트 유형 실행
+## 5. 다른 테스트 유형 실행
 
 ```bash
 # Load 테스트
@@ -111,7 +98,7 @@ helm template load-testing ./load-testing-framework/charts/load-testing \
   | kubectl apply -n load-testing -f -
 ```
 
-## 7. 코드 변경 후 업데이트
+## 6. 코드 변경 후 업데이트
 
 스크립트, 템플릿 또는 values를 수정한 경우:
 
@@ -122,7 +109,7 @@ helm upgrade load-testing ./load-testing-framework/charts/load-testing \
   --set grafana.adminPassword=admin123
 ```
 
-## 8. 정리
+## 7. 정리
 
 ```bash
 # Helm 릴리스 제거

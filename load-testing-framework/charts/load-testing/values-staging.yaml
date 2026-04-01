@@ -6,18 +6,7 @@
 #          -f load-testing-framework/charts/load-testing/values-staging.yaml
 # =============================================================================
 
-# -- Target services for staging
-targets:
-  default:
-    baseUrl: "http://echo-server.load-testing.svc.cluster.local"
-
-# -- k6 defaults tuned for staging (lower resource usage)
-k6:
-  defaults:
-    parallelism: 1
-    separate: false
-
-# -- Prometheus: staging 설정 (PVC 크기는 축소 불가하므로 base와 동일하게 유지)
+# -- Prometheus: staging 설정 (리소스 축소, 보존 기간 단축)
 prometheus:
   server:
     retention: "7d"
@@ -30,9 +19,7 @@ prometheus:
       requests:
         cpu: 250m
         memory: 512Mi
-  # Enable kube-state-metrics and node-exporter for EKS dashboards
-  kube-state-metrics:
-    enabled: true
+  # Enable node-exporter for EKS dashboards (kube-state-metrics already enabled in base)
   prometheus-node-exporter:
     enabled: true
   # Add scrape configs for kube-state-metrics and node-exporter
@@ -82,10 +69,8 @@ prometheus:
             - targets:
                 - "load-testing-prometheus-node-exporter.load-testing.svc.cluster.local:9100"
 
-# -- Grafana: staging 설정 (PVC 크기는 축소 불가하므로 base와 동일하게 유지)
+# -- Grafana: staging 설정 (리소스 축소)
 grafana:
-  persistence:
-    size: 5Gi
   resources:
     limits:
       cpu: 250m

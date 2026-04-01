@@ -38,8 +38,6 @@ grafana:
           access: proxy
           isDefault: true
           editable: false
-          jsonData:
-            timeInterval: "5s"
 
   # -- Dashboard provider: provisions JSON dashboards from the sidecar path
   #    into a dedicated "Load Testing" folder in Grafana.
