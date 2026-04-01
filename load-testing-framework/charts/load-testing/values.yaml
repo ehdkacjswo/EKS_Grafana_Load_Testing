@@ -201,8 +201,9 @@ prometheus:
   # Disable components not needed for load-testing metrics
   alertmanager:
     enabled: false
+  # Enable kube-state-metrics for EKS dashboards (pod health, node health)
   kube-state-metrics:
-    enabled: false
+    enabled: true
   prometheus-node-exporter:
     enabled: false
   prometheus-pushgateway:
@@ -220,10 +221,36 @@ prometheus:
             - targets: []
               labels:
                 source: k6
-        - job_name: echo-server
+        # Pod-based service discovery: scrapes any pod with prometheus.io/scrape=true.
+        # This adds namespace, pod, and node labels automatically, which the
+        # EKS Application dashboard requires for its template variables.
+        - job_name: kubernetes-pods
           scrape_interval: 5s
-          static_configs:
-            - targets:
-                - "echo-server.load-testing.svc.cluster.local:80"
-              labels:
-                source: echo-server
+          kubernetes_sd_configs:
+            - role: pod
+          relabel_configs:
+            # Only scrape pods with prometheus.io/scrape=true
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+              action: keep
+              regex: "true"
+            # Override metrics path if prometheus.io/path is set
+            - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+              action: replace
+              target_label: __metrics_path__
+              regex: (.+)
+            # Override port if prometheus.io/port is set
+            - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+              action: replace
+              regex: ([^:]+)(?::\d+)?;(\d+)
+              replacement: $1:$2
+              target_label: __address__
+            # Map namespace and pod name to labels
+            - source_labels: [__meta_kubernetes_namespace]
+              action: replace
+              target_label: namespace
+            - source_labels: [__meta_kubernetes_pod_name]
+              action: replace
+              target_label: pod
+            - source_labels: [__meta_kubernetes_pod_node_name]
+              action: replace
+              target_label: node
