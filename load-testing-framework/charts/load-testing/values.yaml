@@ -196,7 +196,6 @@ prometheus:
     remoteWrite: []
     extraFlags:
       - "web.enable-remote-write-receiver"
-      - "enable-feature=native-histograms"
 
   # Disable components not needed for load-testing metrics
   alertmanager:
@@ -224,7 +223,7 @@ prometheus:
         # Pod-based service discovery: scrapes any pod with prometheus.io/scrape=true.
         # This adds namespace, pod, and node labels automatically, which the
         # EKS Application dashboard requires for its template variables.
-        - job_name: kubernetes-pods
+        - job_name: load-testing-pods
           scrape_interval: 5s
           kubernetes_sd_configs:
             - role: pod

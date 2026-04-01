@@ -32,7 +32,7 @@ prometheus:
             - targets: []
               labels:
                 source: k6
-        - job_name: kubernetes-pods
+        - job_name: load-testing-pods
           scrape_interval: 5s
           kubernetes_sd_configs:
             - role: pod
