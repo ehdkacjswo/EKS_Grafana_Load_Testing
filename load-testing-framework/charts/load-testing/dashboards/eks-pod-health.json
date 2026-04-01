@@ -27,32 +27,19 @@
       "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 10, "lineWidth": 2 }, "unit": "short" } }
     },
     {
-      "title": "Pods in Pending State",
+      "title": "Pod Count",
       "type": "stat",
-      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 8 },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Pending\"} == 1) or vector(0)", "legendFormat": "Pending", "instant": true }
-      ],
-      "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] } } }
-    },
-    {
-      "title": "Pods by Phase",
-      "type": "stat",
-      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "targets": [
-        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Running\"} == 1) or vector(0)", "legendFormat": "Running", "instant": true },
-        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Pending\"} == 1) or vector(0)", "legendFormat": "Pending", "instant": true },
-        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Failed\"} == 1) or vector(0)", "legendFormat": "Failed", "instant": true },
-        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Succeeded\"} == 1) or vector(0)", "legendFormat": "Succeeded", "instant": true }
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=~\"$phase\"} == 1) or vector(0)", "legendFormat": "Pods", "instant": true }
       ],
       "fieldConfig": { "defaults": { "unit": "short" } }
     },
     {
       "title": "OOMKilled Containers",
       "type": "stat",
-      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 8 },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
         { "expr": "sum(kube_pod_container_status_last_terminated_reason{namespace=~\"$namespace\", reason=\"OOMKilled\"}) or vector(0)", "legendFormat": "OOMKilled", "instant": true }
@@ -60,12 +47,12 @@
       "fieldConfig": { "defaults": { "unit": "short", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } }
     },
     {
-      "title": "Pending Pods Over Time",
+      "title": "Pod Count Over Time",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=\"Pending\"} == 1) or vector(0)", "legendFormat": "Pending" }
+        { "expr": "count(kube_pod_status_phase{namespace=~\"$namespace\", phase=~\"$phase\"} == 1) or vector(0)", "legendFormat": "{{phase}}" }
       ],
       "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "orange" }, "custom": { "fillOpacity": 20, "lineWidth": 2 }, "unit": "short" } }
     },
@@ -85,7 +72,7 @@
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "targets": [
-        { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\"}) by (namespace, pod)", "legendFormat": "{{namespace}}/{{pod}}", "instant": true, "format": "table" }
+        { "expr": "sum(kube_pod_container_status_restarts_total{namespace=~\"$namespace\", pod=~\"$pod\"}) by (namespace, pod) > 0", "legendFormat": "{{namespace}}/{{pod}}", "instant": true, "format": "table" }
       ],
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [{ "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "displayName", "value": "Restart Count" }] }, { "matcher": { "id": "byName", "options": "Time" }, "properties": [{ "id": "custom.hidden", "value": true }] }] },
       "transformations": [{ "id": "sortBy", "options": { "fields": {}, "sort": [{ "field": "Value", "desc": true }] } }]
@@ -112,13 +99,23 @@
         "current": { "text": "All", "value": "$__all" }
       },
       {
+        "name": "phase",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "query": "label_values(kube_pod_status_phase{namespace=~\"$namespace\"}, phase)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": { "text": "Running", "value": "Running" }
+      },
+      {
         "name": "pod",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "${datasource}" },
-        "query": "label_values(kube_pod_info{namespace=~\"$namespace\"}, pod)",
+        "query": "query_result(kube_pod_status_phase{namespace=~\"$namespace\", phase=~\"$phase\"} == 1)",
+        "regex": ".*pod=\"([^\"]+)\".*",
         "refresh": 2,
-        "includeAll": true,
-        "allValue": ".*"
+        "includeAll": true
       }
     ]
   },
